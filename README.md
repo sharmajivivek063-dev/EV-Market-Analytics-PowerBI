@@ -1,4 +1,5 @@
 # ⚡ Smart Mobility & EV Market Analytics
+![Dashboard Preview](EV_Analytics_PowerBI/dashboard_preview.png)
 
 A professional Power BI dashboard tracking EV sales, 
 charging station density and market penetration 
