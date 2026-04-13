@@ -1,0 +1,198 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  SMART MOBILITY & EV MARKET ANALYTICS — POWER QUERY (M CODE)
+//  In Power BI: Home → Transform Data → Advanced Editor
+//  Paste each query into the corresponding table's Advanced Editor
+// ═══════════════════════════════════════════════════════════════════════════
+
+
+// ── Fact_EVSales (ETL showcase query) ───────────────────────────────────────
+let
+    // STEP 1 — Load CSV
+    Source = Csv.Document(
+        File.Contents("C:\EV_Analytics\Fact_EVSales.csv"),
+        [Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+
+    // STEP 2 — Promote Headers
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+
+    // STEP 3 — Set Correct Data Types
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"SalesID",       Int64.Type},
+        {"DateID",        Int64.Type},
+        {"RegionID",      Int64.Type},
+        {"ModelID",       Int64.Type},
+        {"UnitsSold",     Int64.Type},
+        {"Revenue_USD",   Currency.Type},
+        {"DiscountPct",   Percentage.Type},
+        {"SalesChannel",  type text}
+    }),
+
+    // STEP 4 — Calculate Average for Null Imputation
+    AvgUnits = List.Average(
+        List.Select(
+            Table.Column(TypedTable, "UnitsSold"),
+            each _ <> null
+        )
+    ),
+    AvgRevenue = List.Average(
+        List.Select(
+            Table.Column(TypedTable, "Revenue_USD"),
+            each _ <> null
+        )
+    ),
+
+    // STEP 5 — Replace Null UnitsSold with Column Average (M-code showcase)
+    FilledUnits = Table.TransformColumns(TypedTable, {
+        {"UnitsSold", each if _ = null then Number.Round(AvgUnits, 0) else _}
+    }),
+
+    // STEP 6 — Replace Null Revenue with Average
+    FilledRevenue = Table.TransformColumns(FilledUnits, {
+        {"Revenue_USD", each if _ = null then Number.Round(AvgRevenue, 2) else _}
+    }),
+
+    // STEP 7 — Remove Duplicates on SalesID
+    Deduped = Table.Distinct(FilledRevenue, {"SalesID"}),
+
+    // STEP 8 — Filter out rows with zero or negative Units
+    Filtered = Table.SelectRows(Deduped, each [UnitsSold] > 0),
+
+    // STEP 9 — Add Revenue Per Unit calculated column
+    AddedRevenuePerUnit = Table.AddColumn(Filtered, "RevenuePerUnit",
+        each if [UnitsSold] = 0 then 0
+             else Number.Round([Revenue_USD] / [UnitsSold], 2),
+        Currency.Type
+    ),
+
+    // STEP 10 — Add Sales Quarter derived column (from DateID e.g. 20210415)
+    AddedQuarter = Table.AddColumn(AddedRevenuePerUnit, "SalesQuarterLabel",
+        each
+            let
+                m = Number.From(Text.Middle(Text.From([DateID]), 4, 2))
+            in
+                "Q" & Text.From(Number.RoundUp(m / 3)),
+        type text
+    )
+
+in
+    AddedQuarter
+
+
+// ── Dim_Vehicle (Conditional Column showcase) ────────────────────────────────
+let
+    Source = Csv.Document(
+        File.Contents("C:\EV_Analytics\Dim_Vehicle.csv"),
+        [Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"ModelID",         Int64.Type},
+        {"Brand",           type text},
+        {"Model",           type text},
+        {"BodyType",        type text},
+        {"BatteryRange_km", Int64.Type},
+        {"BasePrice_USD",   Currency.Type},
+        {"DrivetrainType",  type text},
+        {"RangeCategory",   type text}
+    }),
+
+    // CONDITIONAL COLUMN — Price Segment
+    AddedPriceSegment = Table.AddColumn(TypedTable, "PriceSegment",
+        each if   [BasePrice_USD] >= 80000 then "Premium"
+             else if [BasePrice_USD] >= 45000 then "Mid-Premium"
+             else if [BasePrice_USD] >= 25000 then "Mass Market"
+             else "Budget",
+        type text
+    ),
+
+    // CONDITIONAL COLUMN — Range Category (standardised)
+    AddedRangeCategory = Table.AddColumn(AddedPriceSegment, "RangeTier",
+        each if   [BatteryRange_km] >= 400 then "Long Range (400+ km)"
+             else if [BatteryRange_km] >= 250 then "Mid Range (250–399 km)"
+             else if [BatteryRange_km] >= 150 then "Short Range (150–249 km)"
+             else "City Range (<150 km)",
+        type text
+    ),
+
+    // TRIM all text columns
+    TrimmedBrand = Table.TransformColumns(AddedRangeCategory,
+        {{"Brand", Text.Trim}, {"Model", Text.Trim}, {"BodyType", Text.Trim}}
+    )
+
+in
+    TrimmedBrand
+
+
+// ── Dim_Region ───────────────────────────────────────────────────────────────
+let
+    Source = Csv.Document(
+        File.Contents("C:\EV_Analytics\Dim_Region.csv"),
+        [Delimiter=",", Columns=7, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"RegionID",           Int64.Type},
+        {"Region",             type text},
+        {"Country",            type text},
+        {"Continent",          type text},
+        {"ChargingStations",   Int64.Type},
+        {"Population",         Int64.Type},
+        {"EVPenetrationRate",  Percentage.Type}
+    }),
+
+    // CONDITIONAL COLUMN — EV Adoption Tier
+    AddedAdoptionTier = Table.AddColumn(TypedTable, "AdoptionTier",
+        each if   [EVPenetrationRate] >= 0.40 then "Pioneer (>40%)"
+             else if [EVPenetrationRate] >= 0.20 then "Growth (20–40%)"
+             else if [EVPenetrationRate] >= 0.10 then "Emerging (10–20%)"
+             else "Early Stage (<10%)",
+        type text
+    ),
+
+    // ADD — Charging Density per 100k population
+    AddedDensity = Table.AddColumn(AddedAdoptionTier, "ChargingPer100k",
+        each Number.Round([ChargingStations] / [Population] * 100000, 1),
+        type number
+    )
+
+in
+    AddedDensity
+
+
+// ── Dim_Date ─────────────────────────────────────────────────────────────────
+let
+    Source = Csv.Document(
+        File.Contents("C:\EV_Analytics\Dim_Date.csv"),
+        [Delimiter=",", Columns=11, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"DateID",       Int64.Type},
+        {"Date",         type date},
+        {"Year",         Int64.Type},
+        {"Quarter",      type text},
+        {"Month",        Int64.Type},
+        {"MonthName",    type text},
+        {"Week",         Int64.Type},
+        {"DayOfWeek",    type text},
+        {"IsWeekend",    type logical},
+        {"FiscalYear",   Int64.Type},
+        {"FiscalQuarter",type text}
+    }),
+
+    // ADD — Short month label for axis labels
+    AddedMonthShort = Table.AddColumn(TypedTable, "MonthShort",
+        each Text.Start([MonthName], 3), type text
+    ),
+
+    // ADD — YearMonth sort key (e.g. 202401)
+    AddedYearMonth = Table.AddColumn(AddedMonthShort, "YearMonth",
+        each [Year] * 100 + [Month], Int64.Type
+    ),
+
+    // SORT by Date ascending
+    Sorted = Table.Sort(AddedYearMonth, {{"Date", Order.Ascending}})
+in
+    Sorted
+

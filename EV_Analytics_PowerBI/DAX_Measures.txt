@@ -1,0 +1,179 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  SMART MOBILITY & EV MARKET ANALYTICS — DAX MEASURES
+//  Paste each measure into Power BI Desktop → New Measure
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── TABLE: [Sales Measures] ──────────────────────────────────────────────
+
+// 1. Total Units Sold (handles nulls from ETL)
+Total Units Sold = 
+CALCULATE(
+    SUMX(
+        Fact_EVSales,
+        IF( ISBLANK(Fact_EVSales[UnitsSold]), 0, Fact_EVSales[UnitsSold] )
+    )
+)
+
+// 2. Total Revenue
+Total Revenue = 
+CALCULATE(
+    SUMX(
+        Fact_EVSales,
+        IF( ISBLANK(Fact_EVSales[Revenue_USD]), 0, Fact_EVSales[Revenue_USD] )
+    )
+)
+
+// 3. Average Selling Price (ASP)
+Avg Selling Price = 
+DIVIDE( [Total Revenue], [Total Units Sold], 0 )
+
+// ── TIME INTELLIGENCE ────────────────────────────────────────────────────
+
+// 4. Units Sold — Previous Year (YoY base)
+Units Sold PY = 
+CALCULATE(
+    [Total Units Sold],
+    SAMEPERIODLASTYEAR( Dim_Date[Date] )
+)
+
+// 5. Year-over-Year Growth %
+YoY Growth % = 
+VAR CurrentPeriod = [Total Units Sold]
+VAR PriorPeriod   = [Units Sold PY]
+RETURN
+    DIVIDE( CurrentPeriod - PriorPeriod, PriorPeriod, BLANK() )
+
+// 6. Year-to-Date Units Sold
+Units Sold YTD = 
+CALCULATE(
+    [Total Units Sold],
+    DATESYTD( Dim_Date[Date] )
+)
+
+// 7. Quarter-to-Date Units Sold
+Units Sold QTD = 
+CALCULATE(
+    [Total Units Sold],
+    DATESQTD( Dim_Date[Date] )
+)
+
+// 8. 3-Month Rolling Average (smooths seasonality)
+3M Rolling Avg Units = 
+CALCULATE(
+    [Total Units Sold],
+    DATESINPERIOD(
+        Dim_Date[Date],
+        LASTDATE( Dim_Date[Date] ),
+        -3,
+        MONTH
+    )
+) / 3
+
+// 9. Cumulative / Running Total Units
+Cumulative Units = 
+CALCULATE(
+    [Total Units Sold],
+    FILTER(
+        ALL( Dim_Date ),
+        Dim_Date[Date] <= MAX( Dim_Date[Date] )
+    )
+)
+
+// ── MARKET SHARE & RANK ──────────────────────────────────────────────────
+
+// 10. Market Share % (within current filter context)
+Market Share % = 
+DIVIDE(
+    [Total Units Sold],
+    CALCULATE( [Total Units Sold], ALL( Dim_Vehicle ) ),
+    0
+)
+
+// 11. Brand Rank by Units (for dynamic rankings visual)
+Brand Rank = 
+RANKX(
+    ALL( Dim_Vehicle[Brand] ),
+    [Total Units Sold],
+    ,
+    DESC,
+    DENSE
+)
+
+// 12. Region Rank by Revenue
+Region Rank = 
+RANKX(
+    ALL( Dim_Region[Region] ),
+    [Total Revenue],
+    ,
+    DESC,
+    DENSE
+)
+
+// ── EV MARKET PENETRATION ────────────────────────────────────────────────
+
+// 13. Charging Station Density (stations per 1,000 population)
+Charging Density = 
+DIVIDE(
+    AVERAGE( Dim_Region[ChargingStations] ),
+    AVERAGE( Dim_Region[Population] ) / 1000,
+    0
+)
+
+// 14. Dynamic Penetration Target Flag
+Penetration Flag = 
+VAR Rate = AVERAGE( Dim_Region[EVPenetrationRate] )
+RETURN
+    SWITCH(
+        TRUE(),
+        Rate >= 0.40, "🟢 Leader",
+        Rate >= 0.20, "🟡 Growing",
+        Rate >= 0.10, "🟠 Emerging",
+        "🔴 Lagging"
+    )
+
+// ── REVENUE INTELLIGENCE ─────────────────────────────────────────────────
+
+// 15. Revenue vs. Prior Year
+Revenue PY = 
+CALCULATE(
+    [Total Revenue],
+    SAMEPERIODLASTYEAR( Dim_Date[Date] )
+)
+
+// 16. Revenue YoY Growth %
+Revenue YoY Growth % = 
+DIVIDE( [Total Revenue] - [Revenue PY], [Revenue PY], BLANK() )
+
+// 17. Revenue YTD
+Revenue YTD = 
+CALCULATE(
+    [Total Revenue],
+    DATESYTD( Dim_Date[Date] )
+)
+
+// 18. Discount Impact (lost revenue from discounts)
+Discount Impact = 
+SUMX(
+    Fact_EVSales,
+    Fact_EVSales[Revenue_USD] * Fact_EVSales[DiscountPct]
+)
+
+// ── KPI CARDS ────────────────────────────────────────────────────────────
+
+// 19. Top Selling Model (dynamic text card)
+Top Model = 
+FIRSTNONBLANK(
+    TOPN( 1,
+          VALUES( Dim_Vehicle[Model] ),
+          [Total Units Sold], DESC
+    ),
+    1
+)
+
+// 20. Forecasted Units (simple linear trend — replace with ML if desired)
+Forecasted Units = 
+VAR LastValue  = CALCULATE( [Total Units Sold], LASTDATE( Dim_Date[Date] ) )
+VAR GrowthRate = 0.22  -- 22% annual CAGR assumption; update from slicer
+RETURN
+    ROUND( LastValue * (1 + GrowthRate), 0 )
+

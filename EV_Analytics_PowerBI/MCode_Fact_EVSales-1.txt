@@ -1,0 +1,51 @@
+let
+    Source = Csv.Document(
+        File.Contents("C:\Users\VIVEK\Desktop\EV-Market-Analytics-PowerBI\EV_Analytics_PowerBI\Fact_EVSales.csv"),
+        [Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"SalesID",       Int64.Type},
+        {"DateID",        Int64.Type},
+        {"RegionID",      Int64.Type},
+        {"ModelID",       Int64.Type},
+        {"UnitsSold",     Int64.Type},
+        {"Revenue_USD",   Currency.Type},
+        {"DiscountPct",   Percentage.Type},
+        {"SalesChannel",  type text}
+    }),
+    AvgUnits = List.Average(
+        List.Select(
+            Table.Column(TypedTable, "UnitsSold"),
+            each _ <> null
+        )
+    ),
+    AvgRevenue = List.Average(
+        List.Select(
+            Table.Column(TypedTable, "Revenue_USD"),
+            each _ <> null
+        )
+    ),
+    FilledUnits = Table.TransformColumns(TypedTable, {
+        {"UnitsSold", each if _ = null then Number.Round(AvgUnits, 0) else _}
+    }),
+    FilledRevenue = Table.TransformColumns(FilledUnits, {
+        {"Revenue_USD", each if _ = null then Number.Round(AvgRevenue, 2) else _}
+    }),
+    Deduped = Table.Distinct(FilledRevenue, {"SalesID"}),
+    Filtered = Table.SelectRows(Deduped, each [UnitsSold] > 0),
+    AddedRevenuePerUnit = Table.AddColumn(Filtered, "RevenuePerUnit",
+        each if [UnitsSold] = 0 then 0
+             else Number.Round([Revenue_USD] / [UnitsSold], 2),
+        Currency.Type
+    ),
+    AddedQuarter = Table.AddColumn(AddedRevenuePerUnit, "SalesQuarterLabel",
+        each
+            let
+                m = Number.From(Text.Middle(Text.From([DateID]), 4, 2))
+            in
+                "Q" & Text.From(Number.RoundUp(m / 3)),
+        type text
+    )
+in
+    AddedQuarter

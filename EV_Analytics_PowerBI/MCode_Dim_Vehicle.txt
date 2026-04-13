@@ -1,0 +1,35 @@
+let
+    Source = Csv.Document(
+        File.Contents("C:\Users\VIVEK\Desktop\EV-Market-Analytics-PowerBI\EV_Analytics_PowerBI\Dim_Vehicle.csv"),
+        [Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"ModelID",         Int64.Type},
+        {"Brand",           type text},
+        {"Model",           type text},
+        {"BodyType",        type text},
+        {"BatteryRange_km", Int64.Type},
+        {"BasePrice_USD",   Currency.Type},
+        {"DrivetrainType",  type text},
+        {"RangeCategory",   type text}
+    }),
+    AddedPriceSegment = Table.AddColumn(TypedTable, "PriceSegment",
+        each if   [BasePrice_USD] >= 80000 then "Premium"
+             else if [BasePrice_USD] >= 45000 then "Mid-Premium"
+             else if [BasePrice_USD] >= 25000 then "Mass Market"
+             else "Budget",
+        type text
+    ),
+    AddedRangeCategory = Table.AddColumn(AddedPriceSegment, "RangeTier",
+        each if   [BatteryRange_km] >= 400 then "Long Range (400+ km)"
+             else if [BatteryRange_km] >= 250 then "Mid Range (250-399 km)"
+             else if [BatteryRange_km] >= 150 then "Short Range (150-249 km)"
+             else "City Range (<150 km)",
+        type text
+    ),
+    TrimmedBrand = Table.TransformColumns(AddedRangeCategory,
+        {{"Brand", Text.Trim}, {"Model", Text.Trim}, {"BodyType", Text.Trim}}
+    )
+in
+    TrimmedBrand

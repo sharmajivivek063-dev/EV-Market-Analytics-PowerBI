@@ -1,0 +1,31 @@
+ModelID,Brand,Model,BodyType,BatteryRange_km,BasePrice_USD,DrivetrainType,RangeCategory
+1,Tesla,Model 3,Sedan,358,39990,Battery Electric,Long Range
+2,Tesla,Model Y,SUV,330,49990,Battery Electric,Long Range
+3,Tesla,Model S,Sedan,405,74990,Battery Electric,Long Range
+4,Tesla,Model X,SUV,348,79990,Battery Electric,Long Range
+5,BYD,Han EV,Sedan,376,32000,Battery Electric,Long Range
+6,BYD,Atto 3,SUV,261,28000,Battery Electric,Mid Range
+7,BYD,Dolphin,Hatchback,204,18000,Battery Electric,Mid Range
+8,Volkswagen,ID.4,SUV,275,38000,Battery Electric,Mid Range
+9,Volkswagen,ID.3,Hatchback,342,32000,Battery Electric,Long Range
+10,Hyundai,IONIQ 5,SUV,266,41450,Battery Electric,Mid Range
+11,Hyundai,IONIQ 6,Sedan,361,38615,Battery Electric,Long Range
+12,Kia,EV6,SUV,310,40900,Battery Electric,Long Range
+13,BMW,i4,Sedan,301,55400,Battery Electric,Long Range
+14,BMW,iX,SUV,324,87100,Battery Electric,Long Range
+15,Chevrolet,Bolt EV,Hatchback,259,26500,Battery Electric,Mid Range
+16,Chevrolet,Blazer EV,SUV,320,44995,Battery Electric,Long Range
+17,Rivian,R1T,Pickup,314,69900,Battery Electric,Long Range
+18,Rivian,R1S,SUV,321,78000,Battery Electric,Long Range
+19,Nissan,Leaf,Hatchback,149,28040,Battery Electric,Short Range
+20,Renault,Zoe,Hatchback,245,32000,Battery Electric,Mid Range
+21,Peugeot,e-208,Hatchback,217,29000,Battery Electric,Mid Range
+22,MINI,Electric,Hatchback,110,30750,Battery Electric,Short Range
+23,Audi,e-tron GT,Sedan,238,99900,Battery Electric,Mid Range
+24,Mercedes,EQS,Sedan,350,104400,Battery Electric,Long Range
+25,Lucid,Air,Sedan,516,138000,Battery Electric,Long Range
+26,Toyota,Prius Prime,Sedan,44,30000,Plug-in Hybrid,Short Range
+27,Toyota,RAV4 Prime,SUV,42,38100,Plug-in Hybrid,Short Range
+28,Ford,F-150 Lightning,Pickup,300,59974,Battery Electric,Long Range
+29,Ford,Mustang Mach-E,SUV,312,42995,Battery Electric,Long Range
+30,Xpeng,P7,Sedan,440,33800,Battery Electric,Long Range

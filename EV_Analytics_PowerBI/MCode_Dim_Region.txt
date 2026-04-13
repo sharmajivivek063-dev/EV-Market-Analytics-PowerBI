@@ -1,0 +1,28 @@
+let
+    Source = Csv.Document(
+        File.Contents("C:\Users\VIVEK\Desktop\EV-Market-Analytics-PowerBI\EV_Analytics_PowerBI\Dim_Region.csv"),
+        [Delimiter=",", Columns=7, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"RegionID",           Int64.Type},
+        {"Region",             type text},
+        {"Country",            type text},
+        {"Continent",          type text},
+        {"ChargingStations",   Int64.Type},
+        {"Population",         Int64.Type},
+        {"EVPenetrationRate",  Percentage.Type}
+    }),
+    AddedAdoptionTier = Table.AddColumn(TypedTable, "AdoptionTier",
+        each if   [EVPenetrationRate] >= 0.40 then "Pioneer (>40%)"
+             else if [EVPenetrationRate] >= 0.20 then "Growth (20-40%)"
+             else if [EVPenetrationRate] >= 0.10 then "Emerging (10-20%)"
+             else "Early Stage (<10%)",
+        type text
+    ),
+    AddedDensity = Table.AddColumn(AddedAdoptionTier, "ChargingPer100k",
+        each Number.Round([ChargingStations] / [Population] * 100000, 1),
+        type number
+    )
+in
+    AddedDensity

@@ -1,0 +1,16 @@
+RegionID,Region,Country,Continent,ChargingStations,Population,EVPenetrationRate
+1,California,USA,West,8420,1200000.0,0.24
+2,Texas,USA,South,3100,1800000.0,0.12
+3,New York,USA,Northeast,6200,980000,0.18
+4,Florida,USA,South,2800,1100000.0,0.1
+5,Washington,USA,West,5100,540000,0.21
+6,Ontario,Canada,East CA,3200,640000,0.16
+7,British Columbia,Canada,West CA,4800,380000,0.22
+8,Bavaria,Germany,Central EU,6900,480000,0.28
+9,Île-de-France,France,Western EU,5400,580000,0.25
+10,Guangdong,China,South CN,12400,2800000.0,0.38
+11,Zhejiang,China,East CN,9800,1900000.0,0.35
+12,Tokyo,Japan,East JP,7600,820000,0.3
+13,Oslo Region,Norway,Scandinavia,9200,210000,0.56
+14,Stockholm Region,Sweden,Scandinavia,6800,310000,0.45
+15,New South Wales,Australia,Oceania,3400,420000,0.08

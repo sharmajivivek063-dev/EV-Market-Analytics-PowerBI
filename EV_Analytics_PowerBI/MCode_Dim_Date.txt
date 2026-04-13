@@ -1,0 +1,28 @@
+let
+    Source = Csv.Document(
+        File.Contents("C:\Users\VIVEK\Desktop\EV-Market-Analytics-PowerBI\EV_Analytics_PowerBI\Dim_Date.csv"),
+        [Delimiter=",", Columns=11, Encoding=1252, QuoteStyle=QuoteStyle.None]
+    ),
+    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    TypedTable = Table.TransformColumnTypes(PromotedHeaders, {
+        {"DateID",        Int64.Type},
+        {"Date",          type date},
+        {"Year",          Int64.Type},
+        {"Quarter",       type text},
+        {"Month",         Int64.Type},
+        {"MonthName",     type text},
+        {"Week",          Int64.Type},
+        {"DayOfWeek",     type text},
+        {"IsWeekend",     type logical},
+        {"FiscalYear",    Int64.Type},
+        {"FiscalQuarter", type text}
+    }),
+    AddedMonthShort = Table.AddColumn(TypedTable, "MonthShort",
+        each Text.Start([MonthName], 3), type text
+    ),
+    AddedYearMonth = Table.AddColumn(AddedMonthShort, "YearMonth",
+        each [Year] * 100 + [Month], Int64.Type
+    ),
+    Sorted = Table.Sort(AddedYearMonth, {{"Date", Order.Ascending}})
+in
+    Sorted
