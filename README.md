@@ -1,13 +1,25 @@
-# ⚡ Smart Mobility & EV Market Analytics
-![Dashboard Preview](EV_Analytics_PowerBI/dashboard_preview.png)
+![Banner](banner.jpeg)
 
-A professional Power BI dashboard tracking EV sales, 
-charging station density and market penetration 
-across 15 global regions and 30 vehicle models.
+
+
+# ⚡ Smart Mobility & EV Market Analytics
+
+[
+
+![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)
+
+](https://www.linkedin.com/in/vivek-vats-692984286)
+[
+
+![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)
+
+](https://github.com/sharmajivivek063-dev)
+
+A professional Power BI dashboard tracking EV sales, charging station density and market penetration across 15 global regions and 30 vehicle models.
 
 ## 📊 Dashboard Results
 - 855K Total Units Sold
-- 37 Billion Total Revenue  
+- 37 Billion Total Revenue
 - 47% YoY Growth
 - Tesla & BYD leading brands
 - 97.97% Battery Electric market share
