@@ -1,5 +1,26 @@
 ![Banner](banner.jpeg)
 
+## 📊 Dashboard Preview
+
+### Page 1 — Executive Summary
+
+
+![Executive Summary](page1_executive_summary.png)
+
+
+
+### Page 2 — Sales Trends
+
+
+![Sales Trends](page2_sales_trends.png)
+
+
+
+### Page 3 — Regional Analysis
+
+
+![Regional Analysis](page3_regional_analysis.png)
+
 
 
 # ⚡ Smart Mobility & EV Market Analytics
